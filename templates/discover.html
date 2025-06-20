@@ -1,0 +1,35 @@
+{% extends "layout.html" %}
+{% block content %}
+<hgroup>
+    <h2>Discover Stories</h2>
+    <p>Explore adventures created by the community.</p>
+</hgroup>
+
+<div class="story-grid">
+    {% for story in stories %}
+    <!-- This article tag now includes an inline style for the background poster -->
+    <article class="story-card with-poster" style="{% if story.posterImageURL %}background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.2), rgba(0,0,0,0.8)), url('{{ story.posterImageURL }}');{% endif %}">
+        <div class="story-card-content">
+            <h5 style="margin-bottom: 0.5rem;">{{ story.title }}</h5>
+            <!-- The story description is now displayed here -->
+            <p class="story-card-description">{{ story.description }}</p>
+            <small>By: {{ story.author_details.username }}</small>
+        </div>
+        <div class="story-card-actions">
+            {% if story.start_node_id %}
+                <!-- This smart button logic is the same as your code -->
+                {% if session.user_id %}
+                    <a href="{{ url_for('player', node_id=story.start_node_id) }}" role="button" class="btn-primary" style="width: 100%;">Play Story</a>
+                {% else %}
+                    <a href="{{ url_for('auth', next=url_for('player', node_id=story.start_node_id)) }}" role="button" class="btn-primary" style="width: 100%;">Play Story</a>
+                {% endif %}
+            {% else %}
+                <p><small>Story in progress...</small></p>
+            {% endif %}
+        </div>
+    </article>
+    {% else %}
+    <p>No stories have been created yet. Be the first!</p>
+    {% endfor %}
+</div>
+{% endblock %}

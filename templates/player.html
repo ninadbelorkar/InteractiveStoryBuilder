@@ -1,0 +1,62 @@
+{% extends "layout.html" %}
+{% block content %}
+<!--
+This container will hold the background image.
+The `style` attribute is dynamically set by Jinja2 if a URL exists in the database.
+Your editor may show a syntax error here, but it is correct for Flask/Jinja2.
+-->
+<div class="player-container" style="{% if node.backgroundImageURL %}background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('{{ node.backgroundImageURL }}');{% endif %}">
+    
+    <article class="player-card">
+        
+        <p>{{ node.story_text }}</p>
+
+        <footer>
+            <div class="grid">
+                {% for choice in node.choices %}
+                    <a href="{{ url_for('player', node_id=choice.nextNodeId) }}" role="button" class="btn-primary">
+                        {{ choice.text }}
+                    </a>
+                {% endfor %}
+            </div>
+
+            <!-- Show "Next" button if there are no choices BUT a next_node_id exists -->
+            {% if not node.choices and node.get('next_node_id') %}
+                <a href="{{ url_for('player', node_id=node.next_node_id) }}" role="button" class="contrast" style="width: 100%; margin-top: 1rem;">Next →</a>
+            {% endif %}
+
+            <!-- Show "The End" if this is the final page -->
+            {% if not node.choices and not node.get('next_node_id') %}
+                <div id="the-end-container" style="text-align: center; margin-top: 2rem;">
+                    <h3>The End</h3>
+                    <p id="ai-ending-text" aria-busy="true">Generating conclusion...</p>
+                    <a href="{{ url_for('discover') }}" role="button" class="btn-primary">Discover More Stories</a>
+                </div>
+            {% endif %}
+        </footer>
+    </article>
+</div>
+
+<!-- Add script only if it's an end page -->
+{% if not node.choices and not node.get('next_node_id') %}
+<script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        const endingTextEl = document.getElementById('ai-ending-text');
+        try {
+            const response = await fetch('/api/ai/generate-ending', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ story_id: '{{ node.story_id }}' })
+            });
+            const data = await response.json();
+            endingTextEl.textContent = data.ending_text;
+            endingTextEl.setAttribute('aria-busy', 'false');
+        } catch (error) {
+            endingTextEl.textContent = "Thank you for the journey!";
+            endingTextEl.setAttribute('aria-busy', 'false');
+        }
+    });
+</script>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends "layout.html" %}
+{% block content %}
+<hgroup>
+    <h2>Dashboard</h2>
+    <p>Welcome, {{ session.username }}!</p>
+</hgroup>
+
+<!-- Section to create a new story -->
+<article>
+    <h3>Create New Story</h3>
+    <form action="{{ url_for('create_story') }}" method="POST" class="grid">
+        <input type="text" name="title" placeholder="Story Title" required>
+        <input type="text" name="description" placeholder="A short description...">
+        <button type="submit" class="btn-primary">Create Story</button>
+    </form>
+</article>
+
+<!-- Section to display stories created by the user -->
+<h3 style="margin-top: 2rem;">My Stories</h3>
+<div class="story-grid">
+    {% for story in stories %}
+    <article class="story-card">
+        <div>
+            <h5 style="margin-bottom: 0.5rem;">{{ story.title }}</h5>
+            <p style="font-size: 0.9rem; color: var(--muted-text-color);">{{ story.description }}</p>
+        </div>
+        <div class="story-card-actions">
+            <a href="{{ url_for('editor', story_id=story._id) }}" role="button" class="btn-edit">Edit</a>
+            {% if story.start_node_id %}
+                <a href="{{ url_for('player', node_id=story.start_node_id) }}" role="button" class="btn-primary">Play</a>
+            {% endif %}
+            <!-- Delete Form for this specific story -->
+            <form action="{{ url_for('delete_story', story_id=story._id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this story?');">
+                <button type="submit" class="btn-accent">Delete</button>
+            </form>
+        </div>
+    </article>
+    {% else %}
+    <p>You haven't created any stories yet. Get started above!</p>
+    {% endfor %}
+</div>
+
+<!-- NEW Section to display stories the user has played -->
+<h3 style="margin-top: 2rem;">Recently Played</h3>
+<div class="story-grid">
+    {% for story in played_stories %}
+    <article class="story-card">
+        <div>
+            <h5 style="margin-bottom: 0.5rem;">{{ story.title }}</h5>
+            <p style="font-size: 0.9rem; color: var(--muted-text-color);">{{ story.description }}</p>
+            <small>By: {{ story.author_details.username }}</small>
+        </div>
+        <div class="story-card-actions">
+            {% if story.start_node_id %}
+                <a href="{{ url_for('player', node_id=story.start_node_id) }}" role="button" class="btn-primary" style="width: 100%;">Play Again</a>
+            {% endif %}
+        </div>
+    </article>
+    {% else %}
+    <p>You haven't played any stories yet. Check out the <a href="{{ url_for('discover') }}">Discover</a> page!</p>
+    {% endfor %}
+</div>
+<!-- END OF NEW SECTION -->
+
+{% endblock %}

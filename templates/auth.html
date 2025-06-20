@@ -1,0 +1,65 @@
+{% extends "layout.html" %}
+{% block content %}
+<article class="auth-container">
+    <div class="auth-tabs">
+        <button id="login-tab-btn" class="active">Login</button>
+        <button id="register-tab-btn">Register</button>
+    </div>
+
+    <!-- Login Form -->
+    <form id="login-form" class="auth-form active" action="{{ url_for('auth') }}" method="POST">
+        <input type="hidden" name="form_type" value="login">
+        <hgroup>
+            <h2>Welcome Back!</h2>
+            <p>Login to continue your journey.</p>
+        </hgroup>
+        <label for="login-email">Email</label>
+        <input type="email" id="login-email" name="email" required>
+        
+        <label for="login-password">Password</label>
+        <input type="password" id="login-password" name="password" required>
+        
+        <button type="submit" class="btn-primary" style="width: 100%;">Login</button>
+    </form>
+
+    <!-- Register Form -->
+    <form id="register-form" class="auth-form" action="{{ url_for('auth') }}" method="POST">
+        <input type="hidden" name="form_type" value="register">
+        <hgroup>
+            <h2>Create an Account</h2>
+            <p>Sign up to start creating your own stories.</p>
+        </hgroup>
+        <label for="register-username">Username</label>
+        <input type="text" id="register-username" name="username" required>
+
+        <label for="register-email">Email</label>
+        <input type="email" id="register-email" name="email" required>
+        
+        <label for="register-password">Password</label>
+        <input type="password" id="register-password" name="password" required>
+
+        <button type="submit" class="btn-primary" style="width: 100%;">Create Account</button>
+    </form>
+</article>
+
+<script>
+    const loginTab = document.getElementById('login-tab-btn');
+    const registerTab = document.getElementById('register-tab-btn');
+    const loginForm = document.getElementById('login-form');
+    const registerForm = document.getElementById('register-form');
+
+    loginTab.addEventListener('click', () => {
+        loginTab.classList.add('active');
+        registerTab.classList.remove('active');
+        loginForm.classList.add('active');
+        registerForm.classList.remove('active');
+    });
+
+    registerTab.addEventListener('click', () => {
+        registerTab.classList.add('active');
+        loginTab.classList.remove('active');
+        registerForm.classList.add('active');
+        loginForm.classList.remove('active');
+    });
+</script>
+{% endblock %}

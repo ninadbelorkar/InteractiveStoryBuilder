@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Story Builder</title>
+    <!-- Pico.css for base structure -->
+    <link rel="stylesheet" href="https://unpkg.com/pico-css@2.0.6/css/pico.min.css" />
+    <!-- Our custom styles, loaded AFTER Pico to override it -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='custom.css') }}">
+</head>
+<body>
+    <nav class="container-fluid main-nav">
+        <div class="nav-left">
+            <strong>
+                {% if session.user_id %}
+                    <a href="{{ url_for('dashboard') }}" class="brand-logo">Interactive Story Builder</a>
+                {% else %}
+                    <a href="{{ url_for('home') }}" class="brand-logo">Interactive Story Builder</a>
+                {% endif %}
+            </strong>
+        </div>
+        <div class="nav-right">
+            <a href="{{ url_for('discover') }}">Discover</a>
+            {% if session.user_id %}
+                <a href="{{ url_for('dashboard') }}">Dashboard</a>
+                <a href="{{ url_for('logout') }}">Logout</a>
+            {% else %}
+                <a href="{{ url_for('auth') }}" role="button" class="btn-primary">Login / Register</a>
+            {% endif %}
+            <button id="theme-toggle" class="theme-toggle-btn">🌙</button>
+        </div>
+    </nav>
+
+    <!-- This is the main wrapper div for centering all page content -->
+    <div class="content-wrapper">
+        <main class="container">
+            <!-- This block displays flash messages (e.g., "Logged in successfully") -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <article class="flash-{{ category }}">
+                            {{ message }}
+                        </article>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- This is where the content of individual pages will be injected -->
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <!-- <footer class="container">
+        <small>Built with Flask & MongoDB.</small>
+    </footer> -->
+    
+    <script>
+        // --- THEME TOGGLE JAVASCRIPT ---
+        const themeToggle = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(theme) {
+            html.setAttribute('data-theme', theme);
+            themeToggle.textContent = theme === 'dark' ? '☀️' : '🌙';
+            localStorage.setItem('theme', theme);
+        }
+
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            applyTheme(newTheme);
+        });
+
+        // Apply saved theme on page load so it persists
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            applyTheme(savedTheme);
+        });
+    </script>
+</body>
+</html>

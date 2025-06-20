@@ -1,0 +1,377 @@
+{% extends "layout.html" %}
+{% block content %}
+<hgroup style="display: flex; justify-content: space-between; align-items: center;">
+    <div>
+        <h2>Story Editor</h2>
+        <h3 id="displayStoryTitle">Editing: {{ story.title }}</h3>
+    </div>
+    <button class="btn-edit" onclick="document.getElementById('edit-story-modal').showModal()">Edit Details</button>
+</hgroup>
+
+<div class="editor-grid">
+    <!-- Left Panel: Node List & Poster Selector -->
+    <aside>
+        <article class="card">
+            <h4 style="margin-top: 0;">Story Pages</h4>
+            <nav>
+                <ul id="node-list">
+                    {% for node in nodes %}
+                    <li>
+                        <a href="#" class="node-link" data-node-id="{{ node._id }}" onclick="loadNode(event)">
+                            {{ node.story_text[:40] }}{% if node.story_text|length > 40 %}...{% endif %}
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </nav>
+            <button id="create-node-btn" class="btn-primary" style="width: 100%;">+ New Page</button>
+
+            <!-- NEW POSTER SELECTOR SECTION -->
+            <div class="poster-selector" style="margin-top: 2rem; border-top: 1px solid var(--card-border-color); padding-top: 1.5rem;">
+                <label for="posterImage">Story Poster</label>
+                <select id="posterImage">
+                    <option value="">-- No Poster --</option>
+                    <!-- Options will be populated by JavaScript -->
+                </select>
+                <button type="button" id="set-poster-btn" class="btn-edit" style="width: 100%; margin-top: 0.5rem;">Set as Poster</button>
+            </div>
+            <!-- END OF NEW SECTION -->
+        </article>
+    </aside>
+
+    <!-- Right Panel: Editor Form -->
+    <section>
+        <article id="editor-panel" style="display: none;">
+            <h4>Edit Page</h4>
+            <form id="editor-form" onsubmit="handleSaveNode(event)">
+                <input type="hidden" id="currentNodeId">
+
+                <label for="storyText">Page Content</label>
+                <textarea id="storyText" name="storyText" rows="15"></textarea>
+                <div class="ai-button-container">
+                    <button type="button" id="enrich-btn" class="btn-ai">
+                        <span class="icon">✨</span> Enrich with AI
+                    </button>
+                </div>
+
+                <label for="backgroundImageURL">Background Image URL <small>(Optional)</small></label>
+                <input type="url" id="backgroundImageURL" name="backgroundImageURL" placeholder="https://example.com/image.jpg">
+
+                <fieldset>
+                    <legend>Choices</legend>
+                    <div class="ai-button-container">
+                         <button type="button" id="suggest-btn" class="btn-ai">
+                            <span class="icon">🤖</span> Suggest Choices with AI
+                         </button>
+                    </div>
+                    <div id="choices-container"></div>
+                    <button type="button" id="add-choice-btn" class="btn-edit" style="width: 100%;">+ Add Manual Choice</button>
+                </fieldset>
+                
+                <div>
+                    <label for="nextNodeId">
+                        Next Page <small>(if no choices are given)</small>
+                    </label>
+                    <select id="nextNodeId" name="nextNodeId">
+                        <option value="">-- No Next Page --</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn-accent" style="width: 100%; margin-top: 1.5rem;">
+                    <span class="icon">💾</span> Save Page
+                </button>
+            </form>
+        </article>
+        <article id="editor-placeholder" class="card" style="display: flex; align-items: center; justify-content: center; min-height: 400px;">
+            <p style="font-size: 1.2rem; color: var(--muted-text-color);">← Select a page on the left to start editing.</p>
+        </article>
+    </section>
+</div>
+
+<script>
+    let currentNodeId = null;
+    const allNodes = {{ nodes|tojson|safe }};
+    
+    // DOM Selectors
+    const posterImageEl = document.getElementById('posterImage');
+    const setPosterBtn = document.getElementById('set-poster-btn');
+    const editorPanel = document.getElementById('editor-panel');
+    const editorPlaceholder = document.getElementById('editor-placeholder');
+    const storyTextEl = document.getElementById('storyText');
+    const backgroundImageURLEl = document.getElementById('backgroundImageURL');
+    const choicesContainer = document.getElementById('choices-container');
+    const nextNodeIdEl = document.getElementById('nextNodeId');
+    const createNodeBtn = document.getElementById('create-node-btn');
+    const enrichBtn = document.getElementById('enrich-btn');
+    const suggestBtn = document.getElementById('suggest-btn');
+    const aiModal = document.getElementById('ai-modal');
+    const aiModalContent = document.getElementById('ai-modal-content');
+    const useAiBtn = document.getElementById('use-ai-btn');
+    const copyAiBtn = document.getElementById('copy-ai-btn');
+
+
+    function openModal(content) {
+        aiModalContent.innerHTML = content; // Can display formatted HTML
+        aiModal.showModal();
+    }
+    function closeModal() {
+        aiModal.close();
+    }
+
+
+    // Function to populate poster dropdown
+    function populatePosterOptions() {
+        const imageUrls = new Set();
+        allNodes.forEach(node => {
+            if (node.backgroundImageURL) {
+                imageUrls.add(node.backgroundImageURL);
+            }
+        });
+
+        posterImageEl.innerHTML = `<option value="">-- No Poster --</option>`;
+        imageUrls.forEach(url => {
+            const displayName = url.length > 30 ? '...' + url.slice(-27) : url;
+            const option = new Option(displayName, url);
+            if (url === '{{ story.posterImageURL or '' }}') {
+                option.selected = true;
+            }
+            posterImageEl.add(option);
+        });
+    }
+
+    // Main function to load a node into the editor
+    async function loadNode(event) {
+        event.preventDefault();
+        
+        document.querySelectorAll('.node-link.active').forEach(link => link.classList.remove('active'));
+        event.target.classList.add('active');
+
+        currentNodeId = event.target.dataset.nodeId;
+        
+        editorPlaceholder.style.display = 'none';
+        editorPanel.style.display = 'block';
+
+        const response = await fetch(`/api/node/${currentNodeId}`);
+        const node = await response.json();
+
+        document.getElementById('currentNodeId').value = currentNodeId;
+        storyTextEl.value = node.story_text;
+        backgroundImageURLEl.value = node.backgroundImageURL || '';
+        renderChoices(node.choices || []);
+        
+        nextNodeIdEl.innerHTML = `<option value="">-- No Next Page --</option>`;
+        allNodes.forEach(n => {
+            if (n._id !== currentNodeId) {
+                const option = new Option(n.story_text.substring(0, 30) + '...', n._id);
+                if (node.next_node_id && n._id === node.next_node_id) {
+                    option.selected = true;
+                }
+                nextNodeIdEl.add(option);
+            }
+        });
+    }
+    
+    // Function to display choices in the editor
+    function renderChoices(choices) {
+        choicesContainer.innerHTML = '';
+        choices.forEach((choice, index) => {
+            const choiceDiv = document.createElement('div');
+            choiceDiv.className = 'choice-item grid';
+            choiceDiv.innerHTML = `
+                <input type="text" value="${choice.text}" placeholder="Choice Text">
+                <select>
+                    <option value="">Select Next Page...</option>
+                    ${allNodes.map(n => `<option value="${n._id}" ${n._id == choice.nextNodeId ? 'selected' : ''}>${n.story_text.substring(0, 25)}...</option>`).join('')}
+                </select>
+                <button type="button" class="btn-accent" onclick="deleteChoice(${index})">X</button>
+            `;
+            choicesContainer.appendChild(choiceDiv);
+        });
+    }
+
+    // Add this new deleteChoice function
+    function deleteChoice(index) {
+        const currentChoices = getCurrentChoicesFromUI();
+        currentChoices.splice(index, 1); // Remove the choice at the given index
+        renderChoices(currentChoices); // Re-render the UI
+    }
+
+    // Add this new helper function to get current choices from the UI
+    function getCurrentChoicesFromUI() {
+        return Array.from(choicesContainer.querySelectorAll('.choice-item')).map(item => ({
+            text: item.querySelector('input[type=text]').value,
+            nextNodeId: item.querySelector('select').value
+        }));
+    }
+
+    // Function to save the currently edited node
+    async function handleSaveNode(event) {
+        event.preventDefault();
+        const choices = getCurrentChoicesFromUI();
+    
+        const saveData = {
+            storyText: storyTextEl.value,
+            choices: choices,
+            backgroundImageURL: backgroundImageURLEl.value,
+            nextNodeId: nextNodeIdEl.value
+        };
+
+        const response = await fetch(`/api/node/${currentNodeId}`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(saveData)
+        });
+
+        if (response.ok) {
+            alert('Saved successfully!');
+            window.location.reload();
+        } else {
+            alert('Error: Could not save the page.');
+        }
+    }
+
+    // --- Event Listeners ---
+
+    // For the "+ New Page" button
+    createNodeBtn.addEventListener('click', async () => {
+        const response = await fetch('/api/story/{{ story._id }}/nodes', { method: 'POST' });
+        if (response.ok) {
+            window.location.reload();
+        } else {
+            alert('Error creating a new page.');
+        }
+    });
+
+    // For the "+ Add Manual Choice" button
+    document.getElementById('add-choice-btn').addEventListener('click', () => {
+        const currentChoices = getCurrentChoicesFromUI();
+        renderChoices([...currentChoices, { text: '', nextNodeId: '' }]);
+    });
+
+    // For the "Enrich with AI" button
+    enrichBtn.addEventListener('click', async () => {
+        enrichBtn.setAttribute('aria-busy', 'true');
+        const response = await fetch('/api/ai/enrich', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ prompt: storyTextEl.value })
+        });
+        const data = await response.json();
+        enrichBtn.setAttribute('aria-busy', 'false');
+        if (data.enriched_text) {
+            openModal(`<p>${data.enriched_text.replace(/\n/g, '<br>')}</p>`);
+            useAiBtn.onclick = () => {
+                storyTextEl.value = data.enriched_text;
+                closeModal();
+            };
+
+            copyAiBtn.onclick = () => {
+                navigator.clipboard.writeText(data.enriched_text);
+                copyAiBtn.textContent = 'Copied!';
+                setTimeout(() => { copyAiBtn.textContent = 'Copy Text'; }, 2000);
+            };
+        } else if (data.error) {
+            alert('AI Error: ' + data.error);
+        }
+    });
+
+    // For the "Suggest Choices with AI" button
+    suggestBtn.addEventListener('click', async () => {
+        suggestBtn.setAttribute('aria-busy', 'true');
+        const response = await fetch('/api/ai/suggest-choices', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ 
+                description: storyTextEl.value,
+                story_title: '{{ story.title }}' // Send the story title for context
+            })
+        });
+        const data = await response.json();
+        suggestBtn.setAttribute('aria-busy', 'false');
+
+        if (data.choices) {
+            const currentChoices = getCurrentChoicesFromUI();
+            const newAiChoices = data.choices.map(text => ({ text, nextNodeId: '' }));
+            renderChoices([...currentChoices, ...newAiChoices]);
+        } else if (data.error) {
+            alert('AI Error: ' + data.error);
+        }
+    });
+    
+    // For the "Set as Poster" button
+    setPosterBtn.addEventListener('click', async () => {
+        const selectedUrl = posterImageEl.value;
+        const response = await fetch('/api/story/{{ story._id }}/set-poster', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ posterImageURL: selectedUrl })
+        });
+        if (response.ok) {
+            alert('Story poster updated!');
+        } else {
+            alert('Error updating poster.');
+        }
+    });
+
+    // Call the poster function when the page initially loads
+    document.addEventListener('DOMContentLoaded', populatePosterOptions);
+
+    document.getElementById('edit-story-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const response = await fetch('/api/story/{{ story._id }}/update-details', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (response.ok) {
+            document.getElementById('displayStoryTitle').textContent = 'Editing: ' + formData.get('title');
+            document.getElementById('edit-story-modal').close();
+            alert('Story details saved!');
+            } else {
+                alert('Error saving details.');
+            }
+    });
+
+</script>
+
+
+{# This dialog displays AI text suggestions #}
+<dialog id="ai-modal">
+  <article>
+    <header>
+      <a href="#close" aria-label="Close" class="close" onclick="closeModal()"></a>
+      AI Suggestion
+    </header>
+    <div id="ai-modal-content">
+      <!-- AI content will be injected here -->
+    </div>
+    <footer>
+        <button id="copy-ai-btn" class="secondary outline">Copy Text</button>
+        <button id="use-ai-btn" class="btn-primary">Use This Text</button>
+    </footer>
+  </article>
+</dialog>
+
+
+{# This dialog displays AI text suggestions #}
+<dialog id="edit-story-modal">
+  <article>
+    <header>
+      <a href="#close" aria-label="Close" class="close" onclick="document.getElementById('edit-story-modal').close()"></a>
+      Edit Story Details
+    </header>
+    <form id="edit-story-form">
+        <label for="storyTitle">Story Title</label>
+        <input type="text" id="storyTitle" name="title" value="{{ story.title }}" required>
+        
+        <label for="storyDescription">Description</label>
+        <textarea id="storyDescription" name="description" rows="4">{{ story.description }}</textarea>
+        
+        <button type="submit" class="btn-primary" style="width: 100%;">Save Details</button>
+    </form>
+  </article>
+</dialog>
+
+
+{% endblock %}

@@ -1,0 +1,395 @@
+/* --- 1. Color Theme & Font --- */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+:root,
+[data-theme="light"] {
+    --primary-pink: #FF69B4;
+    --secondary-blue: #1E90FF;
+    --accent-red: #DC143C;
+    --background-color: #f0f8ff;
+    --card-background-color: #ffffff;
+    --text-color: #0f3460;
+    --card-border-color: #e1e1e1;
+    --muted-text-color: #5f5f5f;
+    --font-family: 'Poppins', sans-serif;
+}
+
+[data-theme="dark"] {
+    --primary-pink: #ff85c6;
+    --secondary-blue: #4dabf7;
+    --accent-red: #ff4d6d;
+    --background-color: #1a1a2e;
+    --card-background-color: #16213e;
+    --text-color: #e0e0e0;
+    --card-border-color: #2a3b5f;
+    --muted-text-color: #a0a0a0;
+}
+
+/* --- 2. Layout & Base Styles --- */
+body {
+    background-color: var(--background-color);
+    color: var(--text-color);
+    font-family: var(--font-family);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.content-wrapper {
+    max-width: 1024px; /* A bit wider for dashboards */
+    margin: 2rem auto;
+    padding: 1rem;
+}
+
+.brand-logo { background: none !important; -webkit-text-fill-color: initial !important; padding: 0 !important; }
+article, .card {
+    background-color: var(--card-background-color);
+    border: 1px solid var(--card-border-color);
+    border-radius: 1rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    transition: all 0.3s ease;
+    padding: 2rem !important;
+}
+[data-theme="dark"] article, [data-theme="dark"] .card { box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+
+
+/* --- 3.0 Polished Navbar --- */
+.main-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+}
+
+.nav-left, .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem; /* Space between nav items */
+}
+
+.main-nav a {
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.main-nav a:not(.btn-primary) {
+    color: var(--muted-text-color);
+}
+.main-nav a:hover:not(.btn-primary) {
+    color: var(--primary-pink);
+}
+
+
+/* --- 3. Professional Auth Form --- */
+.auth-container { max-width: 480px; margin: 2rem auto; }
+.auth-tabs { display: flex; border-bottom: 1px solid var(--card-border-color); margin-bottom: 2rem; }
+.auth-tabs button {
+    flex-grow: 1;
+    padding: 1rem;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--muted-text-color);
+    border-bottom: 3px solid transparent;
+}
+.auth-tabs button.active {
+    color: var(--primary-pink);
+    border-bottom-color: var(--primary-pink);
+}
+.auth-form { display: none; }
+.auth-form.active { display: block; animation: fadeIn 0.5s; }
+/* Add these styles inside the .auth-form rule block */
+.auth-form .grid {
+    grid-template-columns: 1fr; /* Stack elements vertically */
+    gap: 1rem; /* Space between form elements */
+}
+
+.auth-form label {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    display: block; /* Ensure labels are on their own line */
+}
+
+.auth-form input {
+    margin-bottom: 0; /* Remove default bottom margin from Pico */
+}
+
+.auth-form button[type="submit"] {
+    margin-top: 1rem; /* Add space above the final button */
+}
+
+/* --- 4. Polished Dashboard --- */
+.story-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+.story-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 1.5rem !important;
+    min-height: 180px;
+}
+.story-card-actions {
+    margin-top: 1.5rem;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    justify-content: space-between;
+}
+.story-card-actions form { margin-bottom: 0; }
+
+/* --- 5. Custom Themed Buttons --- */
+.btn-primary, .btn-accent, .btn-ai, .btn-edit {
+    color: #fff !important;
+    text-decoration: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    text-align: center;
+    display: inline-block;
+    transition: all 0.2s ease-in-out;
+    border: none;
+}
+.btn-primary { background-color: var(--secondary-blue) !important; }
+.btn-primary:hover { background-color: #007bff !important; transform: translateY(-2px); }
+.btn-accent { background-color: var(--accent-red) !important; }
+.btn-accent:hover { background-color: #c21235 !important; transform: translateY(-2px); }
+.btn-edit { background-color: var(--muted-text-color) !important; font-size: 0.9rem; padding: 0.5rem 1rem; }
+.btn-edit:hover { background-color: #444 !important; transform: translateY(-2px); }
+.btn-ai { background: linear-gradient(45deg, var(--primary-pink), var(--secondary-blue)) !important; }
+.btn-ai:hover { opacity: 0.9; transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+
+
+/* --- NEW SECTION: Flash Messages --- */
+.flash-success {
+    border-left: 5px solid var(--success-green);
+    background-color: rgba(40, 167, 69, 0.1);
+    color: var(--text-color);
+    padding: 1rem !important;
+}
+.flash-error {
+    border-left: 5px solid var(--accent-red);
+    background-color: rgba(220, 20, 60, 0.1);
+    color: var(--text-color);
+    padding: 1rem !important;
+}
+
+
+/* --- .6 Animations & UI Polish --- */
+/* (The old section 6 for Flash Messages should be above this) */
+
+.story-card:hover, article:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+[data-theme="dark"] .story-card:hover, [data-theme="dark"] article:hover {
+    box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+}
+
+.hero {
+    text-align: center;
+    padding: 4rem 0;
+}
+.hero h1 {
+    font-size: 3.5rem;
+    font-weight: 700;
+    background: linear-gradient(45deg, var(--primary-pink), var(--secondary-blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: fadeIn 1s ease-in-out;
+}
+
+/* Player Styles - This is the corrected block */
+.player-container {
+    min-height: 70vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-size: cover;
+    background-position: center;
+    background-color: var(--card-background-color); /* Fallback color if no image */
+    border-radius: 1rem;
+    padding: 1rem;
+    transition: background-image 0.5s ease-in-out;
+}
+.player-card {
+    animation: slideUp 0.5s ease-out;
+}
+.player-container .player-card {
+    background-color: rgba(255, 255, 255, 0.9); /* Semi-transparent white card */
+    backdrop-filter: blur(8px);
+    animation: none;
+    border: none;
+}
+[data-theme="dark"] .player-container .player-card {
+    background-color: rgba(22, 33, 62, 0.9); /* Semi-transparent dark card */
+}
+
+/* Force text to be readable on any background */
+.player-container p, .player-container h3 {
+   color: #111 !important;
+}
+[data-theme="dark"] .player-container p, [data-theme="dark"] .player-container h3 {
+   color: #eee !important;
+}
+
+/* Keyframe Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+
+/* --- NEW: Polished Navbar --- */
+.main-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+}
+
+.nav-left, .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem; /* Space between nav items */
+}
+
+.main-nav a {
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.main-nav a:not(.btn-primary) {
+    color: var(--muted-text-color);
+}
+.main-nav a:hover:not(.btn-primary) {
+    color: var(--primary-pink);
+}
+
+/* --- NEW: Professional Editor Layout --- */
+
+.editor-grid {
+    display: grid;
+    grid-template-columns: 300px 1fr; /* Fixed left column, flexible right column */
+    gap: 1.5rem;
+    align-items: start;
+}
+
+/* Story Pages List on the left */
+#node-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+#node-list li {
+    margin-bottom: 0.5rem;
+}
+.node-link {
+    display: block;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    text-decoration: none;
+    font-weight: 600;
+    color: var(--muted-text-color);
+    border: 2px solid transparent;
+    transition: all 0.2s ease;
+}
+.node-link:hover {
+    background-color: var(--background-color);
+    color: var(--primary-pink);
+}
+.node-link.active {
+    border-color: var(--primary-pink);
+    color: var(--primary-pink);
+    background-color: var(--background-color);
+}
+
+
+/* Editor Form on the right */
+#editor-panel form > *:not(:last-child) {
+    margin-bottom: 1.5rem;
+}
+
+#storyText {
+    min-height: 200px; /* Much larger text area */
+    font-family: 'Georgia', serif; /* A nicer font for writing */
+    font-size: 1.1rem;
+    line-height: 1.6;
+}
+
+#editor-panel fieldset {
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    border: 1px dashed var(--card-border-color);
+}
+
+.choice-item {
+    margin-bottom: 0.5rem;
+}
+.choice-item select {
+    color: var(--muted-text-color);
+}
+
+.ai-button-container {
+    display: flex;
+    justify-content: flex-end;
+}
+.btn-ai .icon, .btn-accent .icon {
+    margin-right: 0.5rem;
+    transition: transform 0.3s ease;
+}
+.btn-ai:hover .icon, .btn-accent:hover .icon {
+    transform: scale(1.2) rotate(-10deg);
+}
+
+/* --- NEW: Theme Toggle Button --- */
+.theme-toggle-btn {
+    background-color: transparent;
+    border: 2px solid var(--muted-text-color);
+    color: var(--muted-text-color);
+    border-radius: 50%; /* Makes it a circle */
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.theme-toggle-btn:hover {
+    border-color: var(--primary-pink);
+    color: var(--primary-pink);
+    transform: translateY(-2px) rotate(-15deg);
+}
+
+/* --- NEW: Poster Card Styles for Discover Page --- */
+.story-card.with-poster {
+    background-size: cover;
+    background-position: center;
+    color: #fff !important; /* Force text to be white */
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end; /* Push content to the bottom */
+    min-height: 250px;
+}
+
+.story-card.with-poster small, .story-card.with-poster h5 {
+    color: #fff !important;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
+}
+
+.story-card-description {
+    font-size: 0.9rem;
+    opacity: 0.9;
+    color: #ddd !important;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+}
